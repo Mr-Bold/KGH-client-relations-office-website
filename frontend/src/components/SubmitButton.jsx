@@ -1,0 +1,1 @@
+export default function SubmitButton({ children = 'Continue to review', loading }) { return <button className="primary-button" type="submit" disabled={loading}>{loading ? 'Submitting...' : children}</button>; }

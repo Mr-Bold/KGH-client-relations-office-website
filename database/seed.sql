@@ -1,0 +1,1 @@
+-- V1 has no public seed data. Apply schema.sql to initialize PostgreSQL.

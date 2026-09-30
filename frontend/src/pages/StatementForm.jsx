@@ -1,0 +1,21 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import DateInput from '../components/DateInput';
+import Declaration from '../components/Declaration';
+import ErrorMessage from '../components/ErrorMessage';
+import FormInput from '../components/FormInput';
+import FormTextarea from '../components/FormTextarea';
+import SubmitButton from '../components/SubmitButton';
+import { useForm } from '../hooks/useForm';
+import { submitStatement } from '../services/api';
+
+const initialValues = { incidentDate: '', name: '', unit: '', telephone: '', narrative: '', declarationAccepted: false, signature: '', submissionDate: new Date().toISOString().slice(0, 10) };
+export default function StatementForm({ type }) {
+  const navigate = useNavigate(); const [reviewing, setReviewing] = useState(false); const [serverError, setServerError] = useState('');
+  const { values, errors, submitting, update, submit } = useForm(initialValues, type, async (data) => { setServerError(''); try { const result = await submitStatement(type, data); navigate('/success', { state: result }); } catch (error) { setServerError(error.message); throw error; } });
+  const title = type === 'STAFF' ? 'Staff statement' : 'Client statement';
+  const review = (event) => { event.preventDefault(); const valid = Object.keys(errors).length === 0 && values.incidentDate && values.name.trim() && values.telephone.trim() && values.narrative.trim() && values.signature.trim() && values.declarationAccepted && (type !== 'STAFF' || values.unit.trim()); if (valid) setReviewing(true); else submit(event); };
+  const goBack = () => { if (window.history.length > 1) navigate(-1); else navigate('/'); };
+  return <main className="form-page"><button className="back-button" type="button" onClick={goBack}>← <span>Back</span></button><div className="form-heading"><div className="eyebrow">{type === 'STAFF' ? 'Staff form' : 'Client form'} · Step {reviewing ? '2' : '1'} of 2</div><h1>{reviewing ? 'Review your statement' : title}</h1><p>{reviewing ? 'Please review your information before submitting.' : 'Tell us what happened. Fields marked with an asterisk are required.'}</p></div><ErrorMessage>{serverError}</ErrorMessage>{reviewing ? <Review values={values} type={type} onBack={() => setReviewing(false)} onSubmit={submit} submitting={submitting} /> : <form onSubmit={review} noValidate><section className="form-section"><h2>Incident details</h2><DateInput label="Date of incident" name="incidentDate" value={values.incidentDate} onChange={update} error={errors.incidentDate} /><FormInput label="Name" name="name" value={values.name} onChange={update} error={errors.name} autoComplete="name" />{type === 'STAFF' && <FormInput label="Unit" name="unit" value={values.unit} onChange={update} error={errors.unit} />}<FormInput label="Telephone" name="telephone" value={values.telephone} onChange={update} error={errors.telephone} type="tel" autoComplete="tel" /><FormTextarea label="Narrative of events" name="narrative" value={values.narrative} onChange={update} error={errors.narrative} /></section><section className="form-section"><h2>Declaration and signature</h2><Declaration checked={values.declarationAccepted} onChange={update} error={errors.declarationAccepted} /><FormInput label={type === 'STAFF' ? 'Staff signature' : 'Client signature'} name="signature" value={values.signature} onChange={update} error={errors.signature} /><DateInput label="Date" name="submissionDate" value={values.submissionDate} onChange={update} /></section><SubmitButton /></form>}</main>;
+}
+function Review({ values, type, onBack, onSubmit, submitting }) { const items = [['Date of incident', values.incidentDate], ['Name', values.name], ...(type === 'STAFF' ? [['Unit', values.unit]] : []), ['Telephone', values.telephone], ['Narrative of events', values.narrative], ['Signature', values.signature], ['Date', values.submissionDate]]; return <div className="review-panel">{items.map(([label, value]) => <div className="review-row" key={label}><small>{label}</small><div>{value}</div></div>)}<div className="review-actions"><button className="secondary-button" onClick={onBack}>Edit statement</button><button className="primary-button" onClick={onSubmit} disabled={submitting}>{submitting ? 'Submitting...' : 'Submit statement'}</button></div></div>; }

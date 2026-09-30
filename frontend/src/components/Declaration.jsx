@@ -1,0 +1,2 @@
+import { DECLARATION } from '../utils/constants';
+export default function Declaration({ checked, onChange, error }) { return <fieldset className="declaration"><legend>Declaration</legend><p>{DECLARATION}</p><label className="check-field"><input type="checkbox" name="declarationAccepted" checked={checked} onChange={onChange} /> <span>I confirm that the information I have provided is true and accurate to the best of my knowledge.</span></label>{error && <span className="field-error" role="alert">{error}</span>}</fieldset>; }
